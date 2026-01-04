@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Elimination Search Game</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f1220;
+      color: #eaeaf0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.4em;
+    }
+    input, button {
+      font-size: 1em;
+      padding: 6px;
+      margin: 4px 0;
+    }
+    .box {
+      background: #1a1f3a;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .small {
+      opacity: 0.8;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Belief Elimination Game</h1>
+<p class="small">
+Hidden 4-digit code (no repeats).  
+Each guess gives partial feedback.  
+The system eliminates impossible worlds.
+</p>
+
+<div class="box">
+  <button onclick="makeGuess()">Make Guess</button>
+  <p><strong>System Guess:</strong> <span id="guess">—</span></p>
+
+  <label>Dead (correct digit & position):</label><br>
+  <input id="dead" type="number" min="0" max="4"><br>
+
+  <label>Injured (correct digit, wrong position):</label><br>
+  <input id="injured" type="number" min="0" max="4"><br>
+
+  <button onclick="submitFeedback()">Submit Feedback</button>
+</div>
+
+<div class="box">
+  <p><strong>Remaining possible states:</strong></p>
+  <p id="count">—</p>
+</div>
+
+<script>
+  function permutations(arr, len) {
+    if (len === 1) return arr.map(x => [x]);
+    let result = [];
+    permutations(arr, len - 1).forEach(p => {
+      arr.forEach(a => {
+        if (!p.includes(a)) result.push([...p, a]);
+      });
+    });
+    return result;
+  }
+
+  const allCodes = permutations("0123456789".split(""), 4)
+    .map(p => p.join(""));
+
+  let belief = [...allCodes];
+  let currentGuess = null;
+
+  function check(code1, code2) {
+    let dead = 0, injured = 0;
+    for (let i = 0; i < 4; i++) {
+      if (code1[i] === code2[i]) dead++;
+      else if (code2.includes(code1[i])) injured++;
+    }
+    return [dead, injured];
+  }
+
+  function makeGuess() {
+    currentGuess = belief[Math.floor(Math.random() * belief.length)];
+    document.getElementById("guess").textContent = currentGuess;
+  }
+
+  function submitFeedback() {
+    if (!currentGuess) return alert("Make a guess first");
+
+    const d = parseInt(document.getElementById("dead").value);
+    const i = parseInt(document.getElementById("injured").value);
+
+    belief = belief.filter(code => {
+      const [cd, ci] = check(code, currentGuess);
+      return cd === d && ci === i;
+    });
+
+    document.getElementById("count").textContent = belief.length;
+    currentGuess = null;
+    document.getElementById("guess").textContent = "—";
+  }
+</script>
+
+</body>
+</html>
